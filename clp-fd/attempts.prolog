@@ -9,13 +9,13 @@ room(auditorium, 200).
 Predicate `teaching(T, H)` is true iff teaching T is taught H hours a week.
 */
 teaching(computer_science, 9).
-teaching(algebra, 6).
-teaching(medicine_one, 9).
-teaching(chemistry, 4).
+%teaching(algebra, 6).
+%teaching(medicine_one, 9).
+%teaching(chemistry, 4).
 
-teaches(crescenzi, algebra).
+%teaches(crescenzi, algebra).
 teaches(crescenzi, computer_science).
-teaches(crescenzi, algorithms).
+%teaches(crescenzi, algorithms).
 
 teaches(casolo, algebra).
 teaches(casolo, algebra_two).
@@ -23,8 +23,8 @@ teaches(casolo, algebra_two).
 teaches(rossi, medicine_one).
 
 course(engineering, computer_science).
-course(engineering, algebra).
-course(engineering, chemistry).
+%course(engineering, algebra).
+%course(engineering, chemistry).
 
 course(medicine, algebra).
 course(medicine, medicine_one).
@@ -47,17 +47,59 @@ sharing(Course, AnotherCourse, Teaching) :-
     ,   course(AnotherCourse, Teaching)
     .
 
-valid([]).
-valid([schedule(Day, time(Start, End), Room, Teaching, Professor, Courses), Rest]) :-  
-        day(Day)
+teachings_list(Teachings)
+    :-  findall(Teaching, teaching(Teaching, _), Teachings).
+
+satisfy_teaching_hours(Hours_per_teaching_assoc_list, Teaching) 
+    :-  teaching(Teaching, Hours)
+    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, ArrangedHours)
+    ,   Hours #= ArrangedHours
+    .  
+
+valid(Schedule)
+    :-  Room_occupacy_assoc_list = []
+    ,   empty_assoc(Hours_per_teaching_assoc_list)
+    ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
+    .
+
+valid([], _, Hours_per_teaching_assoc_list)
+    :-  teachings_list(Teachings)
+    ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
+    .
+
+valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest]
+        ,   Room_occupacy_list
+        ,   Hours_per_teaching_assoc_list    ) 
+    :-  day(Day)
+    ,   room(Room, _)
+    ,   teaching(Teaching, MaxTeachingHoursPerWeek)
+
     ,   [Start, End] ins 8..17
     ,   End #> Start
-%    ,   (End - Start) in 1..4
-    ,   room(Room, _)
-    ,   teaching(Teaching, _)
+    ,   TeachingTime = End - Start
+    ,   TeachingTime #>= 1
+    ,   TeachingTime #=< 4
+
+    ,   write(Room_occupacy_list)
+    ,   forall(member(room_slot(Room, OccStart, OccEnd), Room_occupacy_list), 
+            (write(OccStart), (End #=< OccStart) #\/ (Start #>= OccEnd)))
+
+    ,   (get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
+            ->  (   CumulativeTeachingTime = TaughtHours + TeachingTime,
+                    CumulativeTeachingTime #=< MaxTeachingHoursPerWeek,
+                    put_assoc(Teaching, Hours_per_teaching_assoc_list, CumulativeTeachingTime, 
+                                Updated_hours_per_teaching_assoc_list))
+            ;   (   TeachingTime #=< MaxTeachingHoursPerWeek,
+                    put_assoc(Teaching, Hours_per_teaching_assoc_list, TeachingTime, 
+                                Updated_hours_per_teaching_assoc_list))
+        )
+
     ,   teaches(Professor, Teaching)
-    ,   setof(C, course(C, Teaching), Courses)  % maybe it is not the best idea to unify a list
-    ,   valid(Rest) 
+    ,   course(Course, Teaching)
+    ,   valid(Rest, 
+            [room_slot(Room, Start, End)|Room_occupacy_list], 
+            Updated_hours_per_teaching_assoc_list) 
+    ,   label([Start, End])
     .
      
 acceptable(Schedule) :-
