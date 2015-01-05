@@ -52,6 +52,7 @@ valid([schedule(Day, time(Start, End), Room, Teaching, Professor, Courses), Rest
         day(Day)
     ,   [Start, End] ins 8..17
     ,   End #> Start
+%    ,   (End - Start) in 1..4
     ,   room(Room, _)
     ,   teaching(Teaching, _)
     ,   teaches(Professor, Teaching)
@@ -62,11 +63,28 @@ valid([schedule(Day, time(Start, End), Room, Teaching, Professor, Courses), Rest
 acceptable(Schedule) :-
         valid(Schedule)
     ,   every_teacher_teaches_two_teachings(Schedule)
-    ,   every_teacher_hasnt_time_overlapping(Schedule)
-    ,   every_teacher_teaches_at_most_four_hours_a_day(Schedule)
-    ,   no_less_than_two_and_no_more_than_four_hours_per_teaching_in_a_day(Schedule)
+%    ,   every_teacher_hasnt_time_overlapping(Schedule)
+%    ,   every_teacher_teaches_at_most_four_hours_a_day(Schedule)
+%    ,   no_less_than_two_and_no_more_than_four_hours_per_teaching_in_a_day(Schedule)
     .
           
+every_teacher_teaches_two_teachings(Schedule) :-
+        setof(P, T^teaches(P, T), Professors) 
+    ,   maplist(teachings_taught_by_prof(2, Schedule), Professors)
+    .
+
+teachings_taught_by_prof(NumOfTeachings, Schedule, Professor) :-
+        include(schedule_for_prof(Professor), Schedule, SchedulesForProfessor)
+    ,   maplist(proj_teaching, SchedulesForProfessor, TeachingForProfessor)
+    ,   write(TeachingForProfessor)
+    ,   length(TeachingForProfessor, NumOfTeachings)
+    .
+schedule_for_prof(Professor, schedule(_, _, _, _, Professor, _)).
+proj_teaching(schedule(_, _, _, Teaching, _, _), Teaching).
+
+        
+        
+        %foldl((schedule(_, time(Start, End), _, _, Professor, _) 
 
 % The following predicate `schedule` is true if on day D,
 % at hour H, in room R, teaching T is taught by professor P,
