@@ -62,7 +62,7 @@ valid(Schedule)
     ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
     .
 
-valid([], _, Hours_per_teaching_assoc_list)
+valid([], Room_occupacy_list, Hours_per_teaching_assoc_list)
     :-  teachings_list(Teachings)
     ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
     .
@@ -81,8 +81,14 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   TeachingTime #=< 4
 
     ,   write(Room_occupacy_list)
-    ,   forall(member(room_slot(Room, OccStart, OccEnd), Room_occupacy_list), 
-            (write(OccStart), (End #=< OccStart) #\/ (Start #>= OccEnd)))
+    ,   findall(OccStart..OccEnd, 
+                member(room_slot(Day, Room, OccStart, OccEnd), Room_occupacy_list), Intervals)
+    ,   foreach(member(Interval, Intervals), (#\ End in Interval, #\ Start in Interval))
+    ,   forall(member(room_slot(Day, Room, OccStart, OccEnd), Room_occupacy_list), 
+            (write(OccStart), ((End #=< OccStart) ; (Start #>= OccEnd))))
+    %,   label([YEnd, YStart])
+    %,   End #=< YEnd, Start #>= YStart
+            %(write(OccStart), Start #>= OccEnd ))
 
     ,   (get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
             ->  (   CumulativeTeachingTime = TaughtHours + TeachingTime,
@@ -97,7 +103,7 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   teaches(Professor, Teaching)
     ,   course(Course, Teaching)
     ,   valid(Rest, 
-            [room_slot(Room, Start, End)|Room_occupacy_list], 
+            [room_slot(Day, Room, Start, End)|Room_occupacy_list], 
             Updated_hours_per_teaching_assoc_list) 
     ,   label([Start, End])
     .
