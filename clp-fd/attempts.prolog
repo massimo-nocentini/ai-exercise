@@ -57,10 +57,10 @@ satisfy_teaching_hours(Hours_per_teaching_assoc_list, Teaching)
 
 valid(Schedule)
     :-  Room_occupacy_assoc_list = []
-    ,   empty_assoc(Hours_per_teaching_assoc_list)
 
-    ,   findall(Teaching-0, teaching(Teaching, _), TeachingsAssociations).
+    ,   findall(Teaching-0, teaching(Teaching, _), TeachingsAssociations)
     ,   list_to_assoc(TeachingsAssociations, Hours_per_teaching_assoc_list)
+
     ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
     .
 
@@ -76,23 +76,20 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   room(Room, _)
     ,   teaching(Teaching, MaxTeachingHoursPerWeek)
     
+    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
+
     ,   between(8, 16, Start)
     ,   MaxTeachingHours is min(4, 17 - Start)
     ,   between(1, MaxTeachingHours, TeachingTime)
+    ,   AugmentedTaughtHours is TeachingTime + TaughtHours
+    ,   AugmentedTaughtHours =< MaxTeachingHoursPerWeek
     ,   End is Start + TeachingTime
 
     ,   forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd), AssignedTeachingSlots), 
             ((End =< OccStart) ; (Start >= OccEnd)))
 
-    ,   (get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
-            ->  (   CumulativeTeachingTime is TaughtHours + TeachingTime,
-                    CumulativeTeachingTime =< MaxTeachingHoursPerWeek,
-                    put_assoc(Teaching, Hours_per_teaching_assoc_list, CumulativeTeachingTime, 
-                                Updated_hours_per_teaching_assoc_list))
-            ;   (   TeachingTime =< MaxTeachingHoursPerWeek,
-                    put_assoc(Teaching, Hours_per_teaching_assoc_list, TeachingTime, 
-                                Updated_hours_per_teaching_assoc_list))
-        )
+    ,   put_assoc(Teaching, Hours_per_teaching_assoc_list, 
+            AugmentedTaughtHours, Updated_hours_per_teaching_assoc_list)
 
     ,   teaches(Professor, Teaching)
     ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
