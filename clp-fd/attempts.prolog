@@ -13,12 +13,12 @@ teaching(computer_science, 9).
 %teaching(medicine_one, 9).
 %teaching(chemistry, 4).
 
-%teaches(crescenzi, algebra).
-teaches(crescenzi, computer_science).
-%teaches(crescenzi, algorithms).
+%teaches(bianchi, algebra).
+teaches(bianchi, computer_science).
+%teaches(bianchi, algorithms).
 
-teaches(casolo, algebra).
-teaches(casolo, algebra_two).
+teaches(verdi, algebra).
+teaches(verdi, algebra_two).
 
 teaches(rossi, medicine_one).
 
@@ -52,13 +52,15 @@ teachings_list(Teachings)
 
 satisfy_teaching_hours(Hours_per_teaching_assoc_list, Teaching) 
     :-  teaching(Teaching, Hours)
-    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, ArrangedHours)
-    ,   Hours #= ArrangedHours
+    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, Hours)
     .  
 
 valid(Schedule)
     :-  Room_occupacy_assoc_list = []
     ,   empty_assoc(Hours_per_teaching_assoc_list)
+
+    ,   findall(Teaching-0, teaching(Teaching, _), TeachingsAssociations).
+    ,   list_to_assoc(TeachingsAssociations, Hours_per_teaching_assoc_list)
     ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
     .
 
@@ -68,44 +70,38 @@ valid([], Room_occupacy_list, Hours_per_teaching_assoc_list)
     .
 
 valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest]
-        ,   Room_occupacy_list
+        ,   AssignedTeachingSlots
         ,   Hours_per_teaching_assoc_list    ) 
     :-  day(Day)
     ,   room(Room, _)
     ,   teaching(Teaching, MaxTeachingHoursPerWeek)
+    
+    ,   between(8, 16, Start)
+    ,   MaxTeachingHours is min(4, 17 - Start)
+    ,   between(1, MaxTeachingHours, TeachingTime)
+    ,   End is Start + TeachingTime
 
-    ,   [Start, End] ins 8..17
-    ,   End #> Start
-    ,   TeachingTime = End - Start
-    ,   TeachingTime #>= 1
-    ,   TeachingTime #=< 4
-
-    ,   write(Room_occupacy_list)
-    ,   findall(OccStart..OccEnd, 
-                member(room_slot(Day, Room, OccStart, OccEnd), Room_occupacy_list), Intervals)
-    ,   foreach(member(Interval, Intervals), (#\ End in Interval, #\ Start in Interval))
-    ,   forall(member(room_slot(Day, Room, OccStart, OccEnd), Room_occupacy_list), 
-            (write(OccStart), ((End #=< OccStart) ; (Start #>= OccEnd))))
-    %,   label([YEnd, YStart])
-    %,   End #=< YEnd, Start #>= YStart
-            %(write(OccStart), Start #>= OccEnd ))
+    ,   forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd), AssignedTeachingSlots), 
+            ((End =< OccStart) ; (Start >= OccEnd)))
 
     ,   (get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
-            ->  (   CumulativeTeachingTime = TaughtHours + TeachingTime,
-                    CumulativeTeachingTime #=< MaxTeachingHoursPerWeek,
+            ->  (   CumulativeTeachingTime is TaughtHours + TeachingTime,
+                    CumulativeTeachingTime =< MaxTeachingHoursPerWeek,
                     put_assoc(Teaching, Hours_per_teaching_assoc_list, CumulativeTeachingTime, 
                                 Updated_hours_per_teaching_assoc_list))
-            ;   (   TeachingTime #=< MaxTeachingHoursPerWeek,
+            ;   (   TeachingTime =< MaxTeachingHoursPerWeek,
                     put_assoc(Teaching, Hours_per_teaching_assoc_list, TeachingTime, 
                                 Updated_hours_per_teaching_assoc_list))
         )
 
     ,   teaches(Professor, Teaching)
+    ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
+
     ,   course(Course, Teaching)
+
     ,   valid(Rest, 
-            [room_slot(Day, Room, Start, End)|Room_occupacy_list], 
+            [TeachingSlot|AssignedTeachingSlots], 
             Updated_hours_per_teaching_assoc_list) 
-    ,   label([Start, End])
     .
      
 acceptable(Schedule) :-
