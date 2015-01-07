@@ -106,25 +106,30 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
 
     ,   teaches(Professor, Teaching)
 
-    ,   get_assoc((Professor, Day), DailyHoursPerProf, ProfDailyTaughtHours)
-    ,   AugmentedProfDailyTaughtHours  is ProfDailyTaughtHours + TeachingTime
-    ,   between(0, 4, AugmentedProfDailyTaughtHours)
-    ,   put_assoc((Professor, Day), DailyHoursPerProf, AugmentedProfDailyTaughtHours,
-            AugmentedDailyHoursPerProf)
+    ,   ensure_professor_teaches_at_most_four_hours_in_a_day(
+            Professor, Day, TeachingTime, DailyHoursPerProf, AugmentedDailyHoursPerProf)
 
     ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
 
     ,   course(Course, Teaching)
     
     ,   AugmentedAssignedTeachingSlots = [TeachingSlot|AssignedTeachingSlots]
-    %,   at_most_four_hours_teaching_in_a_day_per_prof( Day, Professor, AugmentedAssignedTeachingSlots)
 
     ,   valid(Rest, 
             AugmentedAssignedTeachingSlots, 
             Updated_hours_per_teaching_assoc_list,
             AugmentedDailyHoursPerProf) 
     .
-     
+    
+ensure_professor_teaches_at_most_four_hours_in_a_day(
+        Professor, Day, TeachingTime, DailyHoursPerProf, AugmentedDailyHoursPerProf)   
+    :-  get_assoc((Professor, Day), DailyHoursPerProf, ProfDailyTaughtHours)
+    ,   AugmentedProfDailyTaughtHours  is ProfDailyTaughtHours + TeachingTime
+    ,   between(0, 4, AugmentedProfDailyTaughtHours)
+    ,   put_assoc((Professor, Day), DailyHoursPerProf, AugmentedProfDailyTaughtHours,
+            AugmentedDailyHoursPerProf)
+    .
+
 acceptable(Schedule) :-
         valid(Schedule)
     ,   every_teacher_teaches_two_teachings(Schedule)
