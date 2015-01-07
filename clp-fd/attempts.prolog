@@ -70,17 +70,21 @@ valid(Schedule)
     ,   findall(Teaching-0, teaching(Teaching, _), TeachingsAssociations)
     ,   list_to_assoc(TeachingsAssociations, Hours_per_teaching_assoc_list)
 
-    ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
+    ,   setof((Prof,Day)-0, T^(day(Day), teaches(Prof, T)), ProfDayPairs)
+    ,   list_to_assoc(ProfDayPairs, DailyHoursPerProf)
+
+    ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list, DailyHoursPerProf)
     .
 
-valid([], AssignedTeachingSlots, Hours_per_teaching_assoc_list)
+valid([], AssignedTeachingSlots, Hours_per_teaching_assoc_list, DailyHoursPerProf)
     :-  teachings_list(Teachings)
     ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
     .
 
 valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest]
         ,   AssignedTeachingSlots
-        ,   Hours_per_teaching_assoc_list    ) 
+        ,   Hours_per_teaching_assoc_list  
+        ,   DailyHoursPerProf)
     :-  day(Day)
     ,   room(Room, _)
     ,   teaching(Teaching, MaxTeachingHoursPerWeek)
@@ -101,17 +105,24 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
             AugmentedTaughtHours, Updated_hours_per_teaching_assoc_list)
 
     ,   teaches(Professor, Teaching)
+
+    ,   get_assoc((Professor, Day), DailyHoursPerProf, ProfDailyTaughtHours)
+    ,   AugmentedProfDailyTaughtHours  is ProfDailyTaughtHours + TeachingTime
+    ,   between(0, 4, AugmentedProfDailyTaughtHours)
+    ,   put_assoc((Professor, Day), DailyHoursPerProf, AugmentedProfDailyTaughtHours,
+            AugmentedDailyHoursPerProf)
+
     ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
 
     ,   course(Course, Teaching)
     
     ,   AugmentedAssignedTeachingSlots = [TeachingSlot|AssignedTeachingSlots]
-    ,   at_most_four_hours_teaching_in_a_day_per_prof( 
-            Day, Professor, AugmentedAssignedTeachingSlots)
+    %,   at_most_four_hours_teaching_in_a_day_per_prof( Day, Professor, AugmentedAssignedTeachingSlots)
 
     ,   valid(Rest, 
             AugmentedAssignedTeachingSlots, 
-            Updated_hours_per_teaching_assoc_list) 
+            Updated_hours_per_teaching_assoc_list,
+            AugmentedDailyHoursPerProf) 
     .
      
 acceptable(Schedule) :-
