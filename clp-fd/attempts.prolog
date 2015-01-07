@@ -55,6 +55,15 @@ satisfy_teaching_hours(Hours_per_teaching_assoc_list, Teaching)
     ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, Hours)
     .  
 
+at_most_four_hours_teaching_in_a_day_per_prof(Day, Professor, AssignedTeachingSlots)
+    :-  foldl(w(Day, Professor), AssignedTeachingSlots, 0, Hours)
+    ,   between(0, 4, Hours)
+    .
+
+w(Day, Professor, teaching_slot(Day, _, _, Professor, Start, End), Cumulate, Hours)
+    :-  Hours is Cumulate + (End - Start)
+    .
+
 valid(Schedule)
     :-  Room_occupacy_assoc_list = []
 
@@ -64,7 +73,7 @@ valid(Schedule)
     ,   valid(Schedule, Room_occupacy_assoc_list, Hours_per_teaching_assoc_list)
     .
 
-valid([], Room_occupacy_list, Hours_per_teaching_assoc_list)
+valid([], AssignedTeachingSlots, Hours_per_teaching_assoc_list)
     :-  teachings_list(Teachings)
     ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
     .
@@ -95,9 +104,13 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
 
     ,   course(Course, Teaching)
+    
+    ,   AugmentedAssignedTeachingSlots = [TeachingSlot|AssignedTeachingSlots]
+    ,   at_most_four_hours_teaching_in_a_day_per_prof( 
+            Day, Professor, AugmentedAssignedTeachingSlots)
 
     ,   valid(Rest, 
-            [TeachingSlot|AssignedTeachingSlots], 
+            AugmentedAssignedTeachingSlots, 
             Updated_hours_per_teaching_assoc_list) 
     .
      
