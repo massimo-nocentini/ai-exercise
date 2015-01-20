@@ -22,13 +22,12 @@ teaches(verdi, computer_science).
 
 teaches(rossi, medicine_one).
 
-course(engineering, computer_science).
-course(engineering, algebra).
-%course(engineering, chemistry).
+course(engineering, computer_science, 50).
+course(engineering, algebra, 35).
 
-course(medicine, algebra).
-course(medicine, medicine_one).
-course(medicine, chemistry).
+course(medicine, algebra, 8).
+course(medicine, medicine_one, 100).
+course(medicine, chemistry, 80).
 
 % HINT: consider adding explicit knowledge for sharing a teaching among two courses
 % sharing(engineering, medicine, algebra).
@@ -52,6 +51,9 @@ teachings_list(Teachings)
 
 professors_list(Professors)
     :-  setof(Prof, T^teaches(Prof, T), Professors).
+
+courses_on_teaching(Teaching, Courses)
+    :-  findall(Course, course(Course, Teaching, _), Courses).
 
 satisfy_teaching_hours(Hours_per_teaching_assoc_list, Teaching)
     :-  teaching(Teaching, Hours)
@@ -92,26 +94,18 @@ valid([], AssignedTeachingSlots,
     ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
     .
 
-valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest]
+valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Courses)|Rest]
         ,   AssignedTeachingSlots
         ,   Hours_per_teaching_assoc_list
         ,   DailyHoursPerProf
         ,   DailyHoursPerTeaching
         ,   TaughtTeachingsPerProfessor)
     :-
-        teaching(Teaching, MaxTeachingHoursPerWeek)
 
-    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
-
-    ,   between(8, 16, Start)
-    ,   MaxTeachingHours is min(4, 17 - Start)
-    ,   between(1, MaxTeachingHours, TeachingTime)
-    ,   AugmentedTaughtHours is TeachingTime + TaughtHours
-    ,   AugmentedTaughtHours =< MaxTeachingHoursPerWeek
-    ,   End is Start + TeachingTime
-
-    ,   put_assoc(Teaching, Hours_per_teaching_assoc_list,
-            AugmentedTaughtHours, Updated_hours_per_teaching_assoc_list)
+        choose_teaching_with_time_slot(
+            Teaching, Start, End, TeachingTime,
+            Hours_per_teaching_assoc_list,
+            Updated_hours_per_teaching_assoc_list)
 
     ,   teaches(Professor, Teaching)
 
@@ -127,23 +121,22 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   ensure_teaching_is_taught_at_most_four_hours_in_a_day(
             Teaching, Day, TeachingTime, DailyHoursPerTeaching, AugmentedDailyHoursPerTeaching)
 
-    ,   forall(member(teaching_slot(Day, _, _, Professor, OccStart, OccEnd),
-            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+    ,   ensure_no_overlapping_for_professor_in_the_same_day(
+            Professor, Day, Start, End, AssignedTeachingSlots)
 
-    ,   forall(member(teaching_slot(Day, _, Teaching, _, OccStart, OccEnd),
-            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+    ,   ensure_no_overlapping_for_teaching_in_the_same_day(
+            Teaching, Day, Start, End, AssignedTeachingSlots)
 
-    ,   room(Room, _)
-    ,   forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd),
-                AssignedTeachingSlots),
-            ((End =< OccStart) ; (Start >= OccEnd)))
+    ,   choose_room_with_enough_sittings_for_teaching(Room, Teaching)
 
-    ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
+    ,   ensure_no_overlapping_for_room_in_the_same_day(
+            Room, Day, Start, End, AssignedTeachingSlots)
 
-    %,   course(Course, Teaching)
-    ,   findall(C, course(C, Teaching), Course)
+    ,   courses_on_teaching(Teaching, Courses)
 
-    ,   AugmentedAssignedTeachingSlots = [TeachingSlot|AssignedTeachingSlots]
+    ,   AugmentedAssignedTeachingSlots = [
+            teaching_slot(Day, Room, Teaching, Professor, Start, End) |
+            AssignedTeachingSlots]
 
     ,   valid(Rest,
             AugmentedAssignedTeachingSlots,
@@ -153,19 +146,66 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
             AugmentedTaughtTeachingsPerProfessor)
     .
 
+choose_room_with_enough_sittings_for_teaching(Room, Teaching)
+    :-
+        room(Room, AvailableSittingsInRoom)
+
+    ,   findall(StudentsNumber, course(_, Teaching, StudentsNumber), StudentsNumbers)
+    ,   foldl(plus, StudentsNumbers, 0, ComprehensiveStudentsFollowingTeaching)
+    ,   ComprehensiveStudentsFollowingTeaching =< AvailableSittingsInRoom
+    .
+
+ensure_no_overlapping_for_room_in_the_same_day(
+        Room, Day, Start, End, AssignedTeachingSlots)
+    :-
+        forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd),
+            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+    .
+
+ensure_no_overlapping_for_professor_in_the_same_day(
+        Professor, Day, Start, End, AssignedTeachingSlots)
+    :-
+        forall(member(teaching_slot(Day, _, _, Professor, OccStart, OccEnd),
+            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+    .
+
+ensure_no_overlapping_for_teaching_in_the_same_day(
+        Teaching, Day, Start, End, AssignedTeachingSlots)
+    :-
+        forall(member(teaching_slot(Day, _, Teaching, _, OccStart, OccEnd),
+            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+    .
+
+choose_teaching_with_time_slot(
+        Teaching, Start, End, TeachingTime,
+        Hours_per_teaching_assoc_list,
+        Updated_hours_per_teaching_assoc_list)
+    :-
+        teaching(Teaching, MaxTeachingHoursPerWeek)
+
+    ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
+
+    ,   between(8, 16, Start)
+    ,   MaxTeachingHours is min(4, 17 - Start)
+    ,   between(1, MaxTeachingHours, TeachingTime)
+    ,   AugmentedTaughtHours is TeachingTime + TaughtHours
+    ,   AugmentedTaughtHours =< MaxTeachingHoursPerWeek
+    ,   End is Start + TeachingTime
+
+    ,   put_assoc(Teaching, Hours_per_teaching_assoc_list,
+            AugmentedTaughtHours, Updated_hours_per_teaching_assoc_list)
+    .
+
 ensure_professor_teaches_at_most_two_teachings(
         Professor, Teaching, TaughtTeachingsPerProfessor,
         AugmentedTaughtTeachingsPerProfessor)
     :-  get_assoc(Professor, TaughtTeachingsPerProfessor, TaughtTeachings)
-    %,   (member(Teaching, TaughtTeachings)
     ,   ((TaughtTeachings = [Teaching] ;
             TaughtTeachings = [Teaching, _] ;
             TaughtTeachings = [_, Teaching])
             ->  AugmentedTaughtTeachingsPerProfessor = TaughtTeachingsPerProfessor
             ;   (
-                % length(TaughtTeachings, NumberOfTaughtTeachings),
-                % between(0, 1, NumberOfTaughtTeachings),
-                    (TaughtTeachings = [] ; TaughtTeachings = [_]),
+                    (TaughtTeachings = [] ; TaughtTeachings = [_]) ->
                     put_assoc(Professor,
                                 TaughtTeachingsPerProfessor,
                                 [Teaching|TaughtTeachings],
