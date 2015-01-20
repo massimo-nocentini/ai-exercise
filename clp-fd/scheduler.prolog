@@ -23,7 +23,7 @@ teaches(verdi, computer_science).
 teaches(rossi, medicine_one).
 
 course(engineering, computer_science).
-%course(engineering, algebra).
+course(engineering, algebra).
 %course(engineering, chemistry).
 
 course(medicine, algebra).
@@ -99,9 +99,7 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
         ,   DailyHoursPerTeaching
         ,   TaughtTeachingsPerProfessor)
     :-
-        day(Day)
-    ,   room(Room, _)
-    ,   teaching(Teaching, MaxTeachingHoursPerWeek)
+        teaching(Teaching, MaxTeachingHoursPerWeek)
 
     ,   get_assoc(Teaching, Hours_per_teaching_assoc_list, TaughtHours)
 
@@ -112,10 +110,6 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
     ,   AugmentedTaughtHours =< MaxTeachingHoursPerWeek
     ,   End is Start + TeachingTime
 
-    ,   forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd),
-                AssignedTeachingSlots),
-            ((End =< OccStart) ; (Start >= OccEnd)))
-
     ,   put_assoc(Teaching, Hours_per_teaching_assoc_list,
             AugmentedTaughtHours, Updated_hours_per_teaching_assoc_list)
 
@@ -125,18 +119,29 @@ valid(  [schedule(Day, time(Start, End), Room, Teaching, Professor, Course)|Rest
             Professor, Teaching, TaughtTeachingsPerProfessor,
                 AugmentedTaughtTeachingsPerProfessor)
 
+    ,   day(Day)
+
     ,   ensure_professor_teaches_at_most_four_hours_in_a_day(
             Professor, Day, TeachingTime, DailyHoursPerProf, AugmentedDailyHoursPerProf)
 
     ,   ensure_teaching_is_taught_at_most_four_hours_in_a_day(
             Teaching, Day, TeachingTime, DailyHoursPerTeaching, AugmentedDailyHoursPerTeaching)
 
-    ,   forall(member(teaching_slot(Day, _, _, _, Professor, OccStart, OccEnd),
+    ,   forall(member(teaching_slot(Day, _, _, Professor, OccStart, OccEnd),
             AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+
+    ,   forall(member(teaching_slot(Day, _, Teaching, _, OccStart, OccEnd),
+            AssignedTeachingSlots), ((End =< OccStart) ; (Start >= OccEnd)))
+
+    ,   room(Room, _)
+    ,   forall(member(teaching_slot(Day, Room, _, _, OccStart, OccEnd),
+                AssignedTeachingSlots),
+            ((End =< OccStart) ; (Start >= OccEnd)))
 
     ,   TeachingSlot = teaching_slot(Day, Room, Teaching, Professor, Start, End)
 
-    ,   course(Course, Teaching)
+    %,   course(Course, Teaching)
+    ,   findall(C, course(C, Teaching), Course)
 
     ,   AugmentedAssignedTeachingSlots = [TeachingSlot|AssignedTeachingSlots]
 
