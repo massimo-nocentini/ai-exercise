@@ -1,0 +1,183 @@
+% article example for classicthesis.sty
+\documentclass[10pt,a4paper]{article} % KOMA-Script article scrartcl
+\usepackage{lipsum}
+\usepackage{url}
+\usepackage[nochapters]{classicthesis} % nochapters
+
+\usepackage[utf8x]{inputenc} % codifica scrittura
+
+\usepackage[T1]{fontenc}
+\usepackage[square,numbers]{natbib}
+\usepackage{amsmath, amsthm, amssymb, amsfonts, tikz}
+\usetikzlibrary{snakes}
+\usepackage{titletoc}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{boxedminipage}
+
+\begin{document}
+    \title{\rmfamily\normalfont\spacedallcaps{AI exam exercise}}
+    \author{\spacedlowsmallcaps{massimo nocentini - 5422207}}
+    \date{\today}
+
+    \maketitle
+
+    \begin{abstract}
+        This short document explains my work to support
+        AI exam, taught by Prof. Paolo Frasconi at University of Florence,
+        comments some results and shows how to reproduce test cases.
+        I implemented a Prolog program that produce a schedule for the
+        problem at hand, satisfying the requested constraints.
+    \end{abstract}
+
+    \tableofcontents
+
+    \section{Problem Analysis}
+    In this exercise we tackle a scheduling problem on classes allocation
+    for a generic university. It is a small instance of a real scenario
+    and in the following sections we describe the considered constraints,
+    Prolog predicates that fullfil them and how to describe a scheduling
+    dataset by predicates ready for computation.
+    We can formalize the problem as follow:
+    \begin{itemize}
+        \item a set of rooms $R = \lbrace r_1, \ldots, r_n \rbrace$, each
+            one of them is described with a name and the number
+            of available sittings;
+        \item a set of teachings $T = \lbrace t_1, \ldots, t_m \rbrace$, each
+            one of them is described with a name and the hours taught in a week;
+        \item a set of professors $P = \lbrace p_1, \ldots, p_s \rbrace$, each
+            one of them is described with a name and a subset of $T$ of teachings
+            it is capable to teach;
+        \item a set of degree courses $C = \lbrace c_1, \ldots, c_q \rbrace$, each
+            one of them is described with a name, a subset $T^\prime$ of teachings
+            and a number of students interested in each offered teaching;
+        \item a subset of courses $C^\prime$ could share a subset $T^\prime$ of teachings.
+    \end{itemize}
+
+    \subsection{Implemented Constraints}
+    Over the previous problem definition it is required to produce a
+    schedule, ie a set of ``teaching slots'' over a standard set of
+    working days $D = \lbrace Monday, Thusday, Wednesday, Thursday, Friday \rbrace$,
+    such that the following constraints hold:
+    \begin{itemize}
+        \item given a day $d \in D$, no time overlapping for each professor $p$,
+            ie if $p$ teach two different teachings then their time slots
+            have to be disjoint;
+        \item given a day $d \in D$, no time overlapping for each room $r$,
+            ie if in $r$ two different teachings happen to be taught then
+            their time slots have to be disjoint;
+        \item to each professor $p$ at most $2$ teachings can be assigned
+            (while it is possible to design a dataset where $p$ is capable
+            to teach more teachings);
+        \item given a day $d \in D$, each professor $p$ cannot teach more than
+           $4$ hours;
+        \item given a day $d \in D$, if a teaching $t$ is taught in $d$ then
+            $t$ have to be taught for at least $2$ and at most $4$ hours;
+        \item if a teaching $t$, shared by a subset of courses
+            $\lbrace (c_1, t, s_1), \ldots, (c_n, t, s_n)\rbrace$,
+            is taught in a room $r = (name, s)$ then $s_1 + \ldots + s_n \leq s$,
+            where $s$ is the number of available sittings in $r$ and
+            $s_i$ is the number of students interested in teaching $t$ enrolled
+            to course $c_i$.
+    \end{itemize}
+
+    \subsection{Prolog Predicates}
+    In order to produce a schedule such that all constraints are met, I
+    implemented a Prolog program which consist of a main file \footnote{
+       find it in \emph{clp-fd/scheduler.prolog}} and in this section I describe
+    quickly the most important predicates and the used coding technique, while
+    in the next section it is described how to describe a problem instance.
+
+    A top level predicate \textbf{go/1} is introduced as an interface in order
+    to solve the supplied scheduling problem, printing the running time and a
+    solution which, for a simple instance, looks like as the following:
+    \begin{verbatim}
+[schedule(monday,time(8,10),auditorium,computer_science,bianchi,[engineering]),
+schedule(tuesday,time(8,10),auditorium,computer_science,bianchi,[engineering]),
+...
+schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
+    \end{verbatim}
+    Let $ts$ be a ground term representing a ``teaching slot''. If $ts$ belongs to a
+    solution, such that $ts = schedule(d, time(s,e), r, t, p, cs)$,
+    then $ts$ has the following meaning:
+    \begin{quote}
+        on day $d$, professor $p$ teaches teaching $t$ in room $r$,
+        starting at $s$ till $e$, and every student interested in following $t$
+        which is enrolled to course $c \in cs$ can attend the class
+    \end{quote}
+
+    Variables about day, professor, teaching, room and timings
+    are instantiated within \textbf{valid/6} predicate.
+    Every time a variable is instantiated some
+    checks are performed in order to fail as soon as possible if such
+    instantiation is not a good one. This shows the ``accumulator''
+    coding technique and it explains why predicate \textbf{valid/6} has
+    such an high ariety, since collecting arguments needs to be passed around.
+    An entry predicate \textbf{valid/1} is defined in order to build
+    initial values for such collecting parameters.
+    Observe that using this coding style, has been
+    possible to code \textbf{valid/6} as a \emph{tail recursive} predicate.
+
+    Some auxiliary predicates have been defined in order to take apart
+    the complexity in small pieces, each one ensuring a requested constraint,
+    to name a few of them: \textbf{ensure\_professor\_teaches\_at\_most\_two\_teachings/4},
+    \textbf{ensure\_no\_overlapping\_for\_teaching\_in\_the\_same\_day/5} and so on.
+
+
+    \subsection{Specifying datasets}
+    An instance of a problem can be defined using the following predicates:
+    \begin{itemize}
+        \item \textbf{room($n$, $s$)} means $n$ is the name
+            of a room containing $s$ sittings;
+        \item \textbf{teaching($t$, $h$)} means $t$ is the name
+            of a teaching which is taught $h$ hours a week;
+        \item \textbf{teaches($p$, $t$)} means $p$ is the name
+            of a professor which can teach teaching $t$;
+        \item \textbf{course($c$, $t$, $s$)} means $s$ students
+            enrolled in course $c$ are interested in following
+            teaching $t$, offered by that course.
+    \end{itemize}
+    In order to express that a teaching $t$ is shared by a subset of
+    courses $\lbrace c_1, \ldots, c_n \rbrace$ write down $n$ clauses
+    as follows:
+    \begin{displaymath}
+        \begin{split}
+            & course(c_1, t, s_1).\\
+            & \ldots \\
+            & course(c_n, t, s_n).
+        \end{split}
+    \end{displaymath}
+    Moreover, if two courses $c_1, c_2$ both have a teaching $t$ about
+    a given topic but their programs do not allow to share, then
+    a dedicated teaching has to be defined, as follow:
+    \begin{displaymath}
+        \begin{split}
+            & course(c_1, t_1, s_1).\\
+            & course(c_2, t_2, s_2).
+        \end{split}
+    \end{displaymath}
+    assigning professors (not necessary different) to $t_1, t_2$.
+
+    \section{Test cases}
+    In this section it is reported a table of test cases with a
+    quick description and the metodology used to run and reproduce them.
+
+    \subsection{Comments}
+    \lipsum[1]
+
+    \subsection{How to reproduce experiments}
+    All the work to produce this document has been versioned in a
+    \emph{Git} repository and hosted at:\\
+    \url{https://github.com/massimo-nocentini/ai-exercise}\\
+    In order to reproduce the above test cases just checkout the
+    repository, change directory into \emph{clp-fd} and use \textbf{make}
+    unix facility, specifying as a rule one of the above table entry, for
+    example:
+    \begin{verbatim}
+$ git clone https://github.com/massimo-nocentini/ai-exercise.git
+... git clone output ...
+$ cd ai-exercise/clp-fd/
+$ make easy
+    \end{verbatim}
+
+\end{document}

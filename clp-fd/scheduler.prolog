@@ -1,6 +1,4 @@
-
 %:- use_module(library(clpfd)).
-
 
 %   working days
 day(monday).
