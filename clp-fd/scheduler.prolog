@@ -1,36 +1,6 @@
 
 %:- use_module(library(clpfd)).
 
-% problem definition
-room(toja, 35).
-room(auditorium, 200).
-
-/*
-Predicate `teaching(T, H)` is true iff teaching T is taught H hours a week.
-*/
-teaching(computer_science, 9).
-teaching(algebra, 6).
-%teaching(medicine_one, 9).
-%teaching(chemistry, 4).
-
-%teaches(bianchi, algebra).
-teaches(bianchi, computer_science).
-%teaches(bianchi, algorithms).
-
-teaches(verdi, algebra).
-teaches(verdi, computer_science).
-
-teaches(rossi, medicine_one).
-
-course(engineering, computer_science, 50).
-course(engineering, algebra, 35).
-
-course(medicine, algebra, 8).
-course(medicine, medicine_one, 100).
-course(medicine, chemistry, 80).
-
-% HINT: consider adding explicit knowledge for sharing a teaching among two courses
-% sharing(engineering, medicine, algebra).
 
 %   working days
 day(monday).
@@ -84,11 +54,7 @@ valid(Schedule)
             TaughtTeachingsPerProfessor)
     .
 
-valid([], AssignedTeachingSlots,
-        Hours_per_teaching_assoc_list,
-        DailyHoursPerProf,
-        DailyHoursPerTeaching,
-        TaughtTeachingsPerProfessor)
+valid([], _, Hours_per_teaching_assoc_list, _, _, _)
     :-
         teachings_list(Teachings)
     ,   maplist(satisfy_teaching_hours(Hours_per_teaching_assoc_list), Teachings)
@@ -199,7 +165,8 @@ choose_teaching_with_time_slot(
 ensure_professor_teaches_at_most_two_teachings(
         Professor, Teaching, TaughtTeachingsPerProfessor,
         AugmentedTaughtTeachingsPerProfessor)
-    :-  get_assoc(Professor, TaughtTeachingsPerProfessor, TaughtTeachings)
+    :-
+        get_assoc(Professor, TaughtTeachingsPerProfessor, TaughtTeachings)
     ,   ((TaughtTeachings = [Teaching] ;
             TaughtTeachings = [Teaching, _] ;
             TaughtTeachings = [_, Teaching])
@@ -216,7 +183,8 @@ ensure_professor_teaches_at_most_two_teachings(
 
 ensure_professor_teaches_at_most_four_hours_in_a_day(
         Professor, Day, TeachingTime, DailyHoursPerProf, AugmentedDailyHoursPerProf)
-    :-  get_assoc((Professor, Day), DailyHoursPerProf, ProfDailyTaughtHours)
+    :-
+        get_assoc((Professor, Day), DailyHoursPerProf, ProfDailyTaughtHours)
     ,   AugmentedProfDailyTaughtHours is ProfDailyTaughtHours + TeachingTime
     ,   between(0, 4, AugmentedProfDailyTaughtHours)
     ,   put_assoc((Professor, Day), DailyHoursPerProf, AugmentedProfDailyTaughtHours,
@@ -225,7 +193,8 @@ ensure_professor_teaches_at_most_four_hours_in_a_day(
 
 ensure_teaching_is_taught_at_most_four_hours_in_a_day(
         Teaching, Day, TeachingTime, DailyHoursPerProf, AugmentedDailyHoursPerProf)
-    :-  get_assoc((Teaching, Day), DailyHoursPerProf, ProfDailyTaughtHours)
+    :-
+        get_assoc((Teaching, Day), DailyHoursPerProf, ProfDailyTaughtHours)
     ,   AugmentedProfDailyTaughtHours  is ProfDailyTaughtHours + TeachingTime
     ,   between(2, 4, AugmentedProfDailyTaughtHours)
     ,   put_assoc((Teaching, Day), DailyHoursPerProf, AugmentedProfDailyTaughtHours,
@@ -245,4 +214,5 @@ go(Schedules)
                         ExecutionTimeMessage)
     ,   string_codes(Message, ExecutionTimeMessage)
     ,   writeln(Message)
+    ,   writeln(Schedules)
     .
