@@ -33,12 +33,13 @@
 %    \tableofcontents
 
     \section{Problem Analysis}
-    In this exercise we tackle a scheduling problem on classes allocation
-    for a generic university. It is a small instance of a real scenario
-    and in the following sections we describe the considered constraints,
-    Prolog predicates that fullfil them and how to describe a scheduling
-    dataset by predicates ready for computation.
-    We can formalize the problem as follow:
+    In this exercise a scheduling problem about classes allocation
+    is tackled. It is a small instance of a real scenario
+    and in the following sections we describe a set of desired constraints,
+    Prolog predicates that fullfil them and how to describe a problem
+    instance by means of predicates ready for computation.
+
+    The problem can be formalized as a tuple composed of:
     \begin{itemize}
         \item a set of rooms $R = \lbrace r_1, \ldots, r_n \rbrace$, each
             one of them is described with a name and the number
@@ -56,39 +57,43 @@
 
     \subsection{Implemented Constraints}
     Over the previous problem definition it is required to produce a
-    schedule, ie a set of ``teaching slots'' over a standard set of
+    schedule, ie a set of ``teaching slots'' that relates
+    objects of the described domain, over a standard set of
     working days $D = \lbrace Monday, Thusday, Wednesday, Thursday, Friday \rbrace$,
     such that the following constraints hold:
     \begin{itemize}
-        \item given a day $d \in D$, no time overlapping for each professor $p$,
-            ie if $p$ teach two different teachings then their time slots
+        \item given a day $d \in D$, no time overlapping is allowed
+            for each professor $p$,
+            ie if $p$ teaches two different teachings then their time slots
             have to be disjoint;
-        \item given a day $d \in D$, no time overlapping for each room $r$,
+        \item given a day $d \in D$, no time overlapping is allowed
+            for each room $r$,
             ie if in $r$ two different teachings happen to be taught then
             their time slots have to be disjoint;
-        \item to each professor $p$ at most $2$ teachings can be assigned
-            (while it is possible to design a dataset where $p$ is capable
-            to teach more teachings);
         \item given a day $d \in D$, each professor $p$ cannot teach more than
            $4$ hours;
         \item given a day $d \in D$, if a teaching $t$ is taught in $d$ then
             $t$ have to be taught for at least $2$ and at most $4$ hours;
+        \item to each professor $p$ at most $2$ teachings can be assigned
+            (while it is possible to design a dataset where $p$ is capable
+            to teach more teachings);
         \item if a teaching $t$, shared by a subset of courses
             $\lbrace (c_1, t, s_1), \ldots, (c_n, t, s_n)\rbrace$,
             is taught in a room $r = (name, s)$ then $s_1 + \ldots + s_n \leq s$,
             where $s$ is the number of available sittings in $r$ and
-            $s_i$ is the number of students interested in teaching $t$ enrolled
-            to course $c_i$.
+            $s_i$ is the number of students enrolled
+            to course $c_i$ and interested in teaching $t$ .
     \end{itemize}
 
     \subsection{Prolog Predicates}
-    In order to produce a schedule such that all constraints are met, I
-    implemented a Prolog program which consist of a main file \footnote{
-       find it in \emph{clp-fd/scheduler.prolog}} and in this section I describe
-    quickly the most important predicates and the used coding technique, while
-    in the next section it is described how to describe a problem instance.
+    In order to produce a schedule such that all constraints are met,
+    a Prolog program has been implemented, which consist of a main file \footnote{
+       find it in \emph{clp-fd/scheduler.prolog}}. In this section the most
+    important predicates are described, together with the used coding technique,
+    while in the next section the task to define a problem instance is taken into
+    account.
 
-    A top level predicate \textbf{go/1} is introduced as an interface in order
+    A top level predicate \textbf{go/1} has been introduced as an interface in order
     to solve the supplied scheduling problem, printing the running time and a
     solution which, for a simple instance, looks like as the following:
     \begin{verbatim}
@@ -102,30 +107,33 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     then $ts$ has the following meaning:
     \begin{quote}
         on day $d$, professor $p$ teaches teaching $t$ in room $r$,
-        starting at $s$ till $e$, and every student interested in following $t$
-        which is enrolled to course $c \in cs$ can attend the class
+        starting at $s$ till $e$, and every student enrolled in course $c \in cs$,
+        which is interested in following $t$, can attend the class
     \end{quote}
 
     Variables about day, professor, teaching, room and timings
     are instantiated within \textbf{valid/6} predicate.
     Every time a variable is instantiated some
     checks are performed in order to fail as soon as possible if such
-    instantiation is not a good one. This shows the ``accumulator''
-    coding technique and it explains why predicate \textbf{valid/6} has
+    instantiation is not a good one respect the requested constraints.
+
+    In order to implement such search strategy, the ``accumulator''
+    coding technique has been used and it explains why predicate \textbf{valid/6} has
     such an high ariety, since collecting arguments needs to be passed around.
-    An entry predicate \textbf{valid/1} is defined in order to build
+    An entry predicate \textbf{valid/1} is defined to build
     initial values for such collecting parameters.
     Observe that using this coding style, has been
     possible to code \textbf{valid/6} as a \emph{tail recursive} predicate.
 
     Some auxiliary predicates have been defined in order to take apart
-    the complexity in small pieces, each one ensuring a requested constraint,
+    complexity in small pieces, each one ensuring a requested constraint,
     to name a few of them: \textbf{ensure\_professor\_teaches\_at\_most\_two\_teachings/4},
     \textbf{ensure\_no\_overlapping\_for\_teaching\_in\_the\_same\_day/5} and so on.
 
 
     \subsection{Specifying datasets}
-    An instance of a problem can be defined using the following predicates:
+    A problem instance can be defined using the following predicates, which
+    are quite similar with statements used in the problem analysis:
     \begin{itemize}
         \item \textbf{room($n$, $s$)} means $n$ is the name
             of a room containing $s$ sittings;
@@ -138,25 +146,27 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
             teaching $t$, offered by that course.
     \end{itemize}
     In order to express that a teaching $t$ is shared by a subset of
-    courses $\lbrace c_1, \ldots, c_n \rbrace$ write down $n$ clauses
+    courses $\lbrace c_1, \ldots, c_n \rbrace$, $n$ clauses should be written
     as follows: $ course(c_1, t, s_1), \ldots, course(c_n, t, s_n)$.
 
     Moreover, if two courses $c_1, c_2$ both should offer a teaching $t$ about
     a given topic but their programs do not allow to share, then $t$
     have to be splitted in two teachings $t_1, t_2$ to be associated as follow :
-    $course(c_1, t_1, s_1), course(c_2, t_2, s_2)$,
+    $course(c_1, t_1, s_1), course(c_2, t_2, s_2)$
     assigning professors (not necessary different) to $t_1, t_2$.
 
     \section{Test cases}
-    In this section it is reported a table of test cases with a
-    quick description and the metodology used to run and reproduce them.
-
+    In this section it is reported a table of test cases written to stress
+    required constraints and the metodology used to run and reproduce them.
 
     \subsection{Experiments table}
     In \ref{table:test-cases} a test case is represented by a row, where
     the first column is the \emph{make rule} to be used in order to rerun the
     test case, while the second column is a brief description about what
-    aspect the test points to.
+    aspect the test points to. Tests reported in this table refer to simple
+    problem instances written ad hoc to point out a specific constraint.
+
+    A generic problem instance can be run using make rule \textbf{difficult}.
 
     \begin{table}
         \label{table:test-cases}
@@ -174,7 +184,7 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
             \textbf{more-than-two-teaching-single-professor} & A room $r$ is available and
                 there exists only one professor $p$. Moreover $p$ have to teach three teachings.
                 This test shows that this problem has no solution and it takes
-                a long time to fail since Prolog attempts every possible paths. \\
+                a long time to fail since Prolog attempts every possible paths \\
             \hline
             \textbf{more-than-two-teaching-multi-professors} & A room $r$ is available and
                 there are one more professor $p^\prime$ respect the test above,
@@ -198,14 +208,14 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
             \hline
             \textbf{teaching-shared-by-courses-too-many-students} &
                 A room $r$ is available,
-                there exists only one professor $p$ and a teaching $t$ taught by $p$
+                there exists only one professor $p$, a teaching $t$ taught by $p$
                 and shared by two courses $c_1, c_2$ such that the total number
                 of interested students is greater than the number of sittings in
                 room $r$.
                 This test shows that this little instance is not satisfiable \\
             \hline
             \textbf{teaching-shared-by-courses-no-overlapping} &
-                This instance is quite similar as the above one, a new
+                This instance is quite similar as the above one: a new
                 room $r^\prime$ is available, there exists one more professor
                 $p^\prime$ that also can teach $t$, which is shared by two
                 courses $c_1, c_2$ as before. Here the total number
