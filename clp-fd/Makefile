@@ -4,6 +4,32 @@
 # are met.
 #
 
-very-first:
-	echo 'Very first dataset'
+easy:
 	swipl --quiet --nodebug -t 'go(Schedule).' scheduler.prolog very-first-dataset.prolog
+
+# The following rules works toward not so difficult problems
+# trying to show the requested constraints are met.
+
+no-overlapping-for-professor:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/no-overlapping-for-professor.prolog
+
+no-overlapping-for-room:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/no-overlapping-for-room.prolog
+
+more-than-two-teaching-single-professor:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/more-than-two-teaching-single-professor.prolog
+
+more-than-two-teaching-multi-professors:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/more-than-two-teaching-multi-professors.prolog
+
+at-most-four-day-hours-for-prof:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/at-most-four-day-hours-for-prof.prolog
+
+teaching-with-one-hour-a-week:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/teaching-with-one-hour-a-week.prolog

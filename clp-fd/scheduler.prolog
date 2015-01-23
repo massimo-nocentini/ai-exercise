@@ -165,16 +165,19 @@ ensure_professor_teaches_at_most_two_teachings(
         AugmentedTaughtTeachingsPerProfessor)
     :-
         get_assoc(Professor, TaughtTeachingsPerProfessor, TaughtTeachings)
+    ,   length(TaughtTeachings, L)
+    ,   (L > 2 -> fail ; true)
     ,   ((TaughtTeachings = [Teaching] ;
             TaughtTeachings = [Teaching, _] ;
             TaughtTeachings = [_, Teaching])
             ->  AugmentedTaughtTeachingsPerProfessor = TaughtTeachingsPerProfessor
             ;   (
                     (TaughtTeachings = [] ; TaughtTeachings = [_]) ->
-                    put_assoc(Professor,
-                                TaughtTeachingsPerProfessor,
-                                [Teaching|TaughtTeachings],
-                                AugmentedTaughtTeachingsPerProfessor)
+                        put_assoc(Professor,
+                                    TaughtTeachingsPerProfessor,
+                                    [Teaching|TaughtTeachings],
+                                    AugmentedTaughtTeachingsPerProfessor)
+                    ; fail
                 )
             )
     .

@@ -30,7 +30,7 @@
         problem at hand, satisfying the requested constraints.
     \end{abstract}
 
-    \tableofcontents
+%    \tableofcontents
 
     \section{Problem Analysis}
     In this exercise we tackle a scheduling problem on classes allocation
@@ -139,31 +139,61 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     \end{itemize}
     In order to express that a teaching $t$ is shared by a subset of
     courses $\lbrace c_1, \ldots, c_n \rbrace$ write down $n$ clauses
-    as follows:
-    \begin{displaymath}
-        \begin{split}
-            & course(c_1, t, s_1).\\
-            & \ldots \\
-            & course(c_n, t, s_n).
-        \end{split}
-    \end{displaymath}
-    Moreover, if two courses $c_1, c_2$ both have a teaching $t$ about
-    a given topic but their programs do not allow to share, then
-    a dedicated teaching has to be defined, as follow:
-    \begin{displaymath}
-        \begin{split}
-            & course(c_1, t_1, s_1).\\
-            & course(c_2, t_2, s_2).
-        \end{split}
-    \end{displaymath}
+    as follows: $ course(c_1, t, s_1), \ldots, course(c_n, t, s_n)$.
+
+    Moreover, if two courses $c_1, c_2$ both should offer a teaching $t$ about
+    a given topic but their programs do not allow to share, then $t$
+    have to be splitted in two teachings $t_1, t_2$ to be associated as follow :
+    $course(c_1, t_1, s_1), course(c_2, t_2, s_2)$,
     assigning professors (not necessary different) to $t_1, t_2$.
 
     \section{Test cases}
     In this section it is reported a table of test cases with a
     quick description and the metodology used to run and reproduce them.
 
-    \subsection{Comments}
-    \lipsum[1]
+    \subsection{Experiments table}
+    In the following table we report a test case in each row, where
+    the first column is the \emph{make rule} to be used to rerun the
+    test case, while the second column is a brief description about what
+    aspect the test points to.
+    \begin{center}
+        \begin{tabular}{ c | p{6cm} }
+            make rule & Description  \\
+            \hline
+            \textbf{no-overlapping-for-professor} & A single professor $p$
+                teaches two teachings and two rooms are available.
+                This test shows that no teaching time overlapping happen for $p$ \\
+            \hline
+            \textbf{no-overlapping-for-room} & A room $r$ is available and two
+                professors teach a different teaching respectively.
+                This test shows that no teaching time overlapping happen for $r$  \\
+            \hline
+            \textbf{more-than-two-teaching-single-professor} & A room $r$ is available and
+                there exists only one professor $p$. Moreover $p$ have to teach three teachings.
+                This test shows that this problem has no solution and it takes
+                a long time to fail since Prolog attempts every possible paths. \\
+            \hline
+            \textbf{more-than-two-teaching-multi-professors} & A room $r$ is available and
+                there are one more professor $p^\prime$ respect the test above,
+                which is capable to teach a course also taught by $p$.
+                As before $p$ can teach three teachings.
+                This test shows that this problem is indeed satisfiable but
+                the order in which teaching clauses are written implies different
+                running times \\
+            \hline
+            \textbf{at-most-four-day-hours-for-prof} & A room $r$ is available and
+                there exists only one professor $p$
+                which is capable to teach two courses for a comprehensive 18 hours
+                a week. This test shows that $p$ teaches at most $4$ hours a day\\
+            \hline
+            \textbf{teaching-with-one-hour-a-week} & A room $r$ is available and
+                there exists only one professor $p$ and a teaching $t$ such that
+                $p$ teaches $t$, with the setting that $t$ has only $1$ hour a week.
+                This test shows that this little instance is not satisfiable,
+                since if a teaching is scheduled on a day $d$, it should be taught
+                for at least two hours.
+        \end{tabular}
+    \end{center}
 
     \subsection{How to reproduce experiments}
     All the work to produce this document has been versioned in a
@@ -178,6 +208,7 @@ $ git clone https://github.com/massimo-nocentini/ai-exercise.git
 ... git clone output ...
 $ cd ai-exercise/clp-fd/
 $ make easy
+... a solution to a simple dataset ...
     \end{verbatim}
 
 \end{document}
