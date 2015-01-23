@@ -33,3 +33,11 @@ at-most-four-day-hours-for-prof:
 teaching-with-one-hour-a-week:
 	swipl --quiet --nodebug -t 'go(Schedule).' \
 		scheduler.prolog datasets/teaching-with-one-hour-a-week.prolog
+
+teaching-shared-by-courses-too-many-students:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/teaching-shared-by-courses-too-many-students.prolog
+
+teaching-shared-by-courses-no-overlapping:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/teaching-shared-by-courses-no-overlapping.prolog

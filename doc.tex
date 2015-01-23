@@ -151,12 +151,15 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     In this section it is reported a table of test cases with a
     quick description and the metodology used to run and reproduce them.
 
+
     \subsection{Experiments table}
-    In the following table we report a test case in each row, where
-    the first column is the \emph{make rule} to be used to rerun the
+    In \ref{table:test-cases} a test case is represented by a row, where
+    the first column is the \emph{make rule} to be used in order to rerun the
     test case, while the second column is a brief description about what
     aspect the test points to.
-    \begin{center}
+
+    \begin{table}
+        \label{table:test-cases}
         \begin{tabular}{ c | p{6cm} }
             make rule & Description  \\
             \hline
@@ -191,24 +194,46 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
                 $p$ teaches $t$, with the setting that $t$ has only $1$ hour a week.
                 This test shows that this little instance is not satisfiable,
                 since if a teaching is scheduled on a day $d$, it should be taught
-                for at least two hours.
-        \end{tabular}
-    \end{center}
+                for at least two hours \\
+            \hline
+            \textbf{teaching-shared-by-courses-too-many-students} &
+                A room $r$ is available,
+                there exists only one professor $p$ and a teaching $t$ taught by $p$
+                and shared by two courses $c_1, c_2$ such that the total number
+                of interested students is greater than the number of sittings in
+                room $r$.
+                This test shows that this little instance is not satisfiable \\
+            \hline
+            \textbf{teaching-shared-by-courses-no-overlapping} &
+                This instance is quite similar as the above one, a new
+                room $r^\prime$ is available, there exists one more professor
+                $p^\prime$ that also can teach $t$, which is shared by two
+                courses $c_1, c_2$ as before. Here the total number
+                of interested students is less than the number of sittings in
+                both rooms. This test shows that no overlapping for teaching $t$
+                happens, nonetheless auxiliary room and professor are available \\
+            \end{tabular}
+
+        \caption{Test cases table with make rules and descriptions}
+    \end{table}
 
     \subsection{How to reproduce experiments}
     All the work to produce this document has been versioned in a
-    \emph{Git} repository and hosted at:\\
+    \emph{Git} repository hosted at:
     \url{https://github.com/massimo-nocentini/ai-exercise}\\
     In order to reproduce the above test cases just checkout the
     repository, change directory into \emph{clp-fd} and use \textbf{make}
-    unix facility, specifying as a rule one of the above table entry, for
-    example:
+    unix facility, specifying as a rule one in the first column of table
+    \ref{table:test-cases}, for example:
     \begin{verbatim}
 $ git clone https://github.com/massimo-nocentini/ai-exercise.git
 ... git clone output ...
 $ cd ai-exercise/clp-fd/
-$ make easy
+$ make no-overlapping-for-professor
 ... a solution to a simple dataset ...
     \end{verbatim}
+    A make rule reports an error if and only if the corresponding
+    test case fails if and only if there's no solution for the
+    problem instance under test.
 
 \end{document}
