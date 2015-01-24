@@ -41,3 +41,9 @@ teaching-shared-by-courses-too-many-students:
 teaching-shared-by-courses-no-overlapping:
 	swipl --quiet --nodebug -t 'go(Schedule).' \
 		scheduler.prolog datasets/teaching-shared-by-courses-no-overlapping.prolog
+
+# The following rules is for a more difficult instances.
+
+difficult:
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/difficult.prolog
