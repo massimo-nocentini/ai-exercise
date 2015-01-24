@@ -166,7 +166,30 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     aspect the test points to. Tests reported in this table refer to simple
     problem instances written ad hoc to point out a specific constraint.
 
-    A generic problem instance can be run using make rule \textbf{difficult}.
+    A more difficult problem instance can be run using make rule \textbf{difficult}:
+    here 13 teachings have been introduced, almost all of them have two teachers
+    (one has $3$, two have $1$). Teachings are spread over $4$ degree courses
+    such that each course shares at least $2$ teachings with other courses.
+    Has been difficult to choose a combination of parameters to report result against,
+    so scheduling has been performed changing the number of available rooms,
+    in particular the following table shows recorded performances:
+
+    \begin{center}
+        \begin{tabular}{p{6cm} | c}
+            \textbf{available rooms} & \textbf{running time} \\
+            \hline
+            $ \lbrace $ (attic, 20), (lab, 30), (basement, 40),
+                (toja, 50), (auditorium, 100)$ \rbrace $ & 0.105 sec \\
+            \hline
+            $ \lbrace $ (lab, 30), (basement, 40),
+                (toja, 50), (auditorium, 100)$ \rbrace $ & 0.128 sec\\
+            \hline
+            $ \lbrace $ (basement, 40),
+                (toja, 50), (auditorium, 100)$ \rbrace $ & 0.176 sec \\
+            \hline
+            $ \lbrace $ (toja, 50), (auditorium, 100)$ \rbrace $ & no sol within $5$ min
+        \end{tabular}
+    \end{center}
 
     \begin{table}
         \label{table:test-cases}

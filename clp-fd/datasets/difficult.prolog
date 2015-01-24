@@ -1,7 +1,7 @@
 
-room(attic, 20).
-room(lab, 30).
-room(basement, 40).
+%room(attic, 20).
+%room(lab, 30).
+%room(basement, 40).
 room(toja, 50).
 room(auditorium, 100).
 
