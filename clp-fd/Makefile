@@ -5,7 +5,8 @@
 #
 
 easy:
-	swipl --quiet --nodebug -t 'go(Schedule).' scheduler.prolog very-first-dataset.prolog
+	swipl --quiet --nodebug -t 'go(Schedule).' \
+		scheduler.prolog datasets/very-first-dataset.prolog
 
 # The following rules works toward not so difficult problems
 # trying to show the requested constraints are met.
