@@ -26,8 +26,8 @@
         This short document explains my work to support
         AI exam, taught by Prof. Paolo Frasconi at University of Florence,
         comments some results and shows how to reproduce test cases.
-        I implemented a Prolog program that produce a schedule for the
-        problem at hand, satisfying the requested constraints.
+        A Prolog program has been implemented in order to  produce a scheduler
+        for the problem at hand, satisfying the requested constraints.
     \end{abstract}
 
 %    \tableofcontents
@@ -47,7 +47,7 @@
         \item a set of teachings $T = \lbrace t_1, \ldots, t_m \rbrace$, each
             one of them is described with a name and the hours taught in a week;
         \item a set of professors $P = \lbrace p_1, \ldots, p_s \rbrace$, each
-            one of them is described with a name and a subset of $T$ of teachings
+            one of them is described with a name and a subset $T^\prime$ of teachings
             it is capable to teach;
         \item a set of degree courses $C = \lbrace c_1, \ldots, c_q \rbrace$, each
             one of them is described with a name, a subset $T^\prime$ of teachings
@@ -87,8 +87,8 @@
 
     \subsection{Prolog Predicates}
     In order to produce a schedule such that all constraints are met,
-    a Prolog program has been implemented, which consist of a main file \footnote{
-       find it in \emph{clp-fd/scheduler.prolog}}. In this section the most
+    a Prolog program has been implemented, which consist of a single source file
+    \footnote{ find it in \emph{clp-fd/scheduler.prolog}}. In this section the most
     important predicates are described, together with the used coding technique,
     while in the next section the task to define a problem instance is taken into
     account.
@@ -114,7 +114,7 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     Variables about day, professor, teaching, room and timings
     are instantiated within \textbf{valid/6} predicate.
     Every time a variable is instantiated some
-    checks are performed in order to fail as soon as possible if such
+    checks are performed in order to \emph{fail as soon as possible} if such
     instantiation is not a good one respect the requested constraints.
 
     In order to implement such search strategy, the ``accumulator''
@@ -133,7 +133,7 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
 
     \subsection{Specifying datasets}
     A problem instance can be defined using the following predicates, which
-    are quite similar with statements used in the problem analysis:
+    are quite similar to statements expressed in the problem analysis:
     \begin{itemize}
         \item \textbf{room($n$, $s$)} means $n$ is the name
             of a room containing $s$ sittings;
@@ -153,14 +153,15 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     a given topic but their programs do not allow to share, then $t$
     have to be splitted in two teachings $t_1, t_2$ to be associated as follow :
     $course(c_1, t_1, s_1), course(c_2, t_2, s_2)$
-    assigning professors (not necessary different) to $t_1, t_2$.
+    assigning professors (not necessarily different) to $t_1, t_2$.
 
     \section{Test cases}
-    In this section it is reported a table of test cases written to stress
-    required constraints and the metodology used to run and reproduce them.
+    In this section it is reported a table of test cases, written to stress
+    the proposed implementation to match required constraints,
+    and the metodology used to run and reproduce them.
 
     \subsection{Experiments table}
-    In \ref{table:test-cases} a test case is represented by a row, where
+    In \autoref{table:test-cases} a test case is represented by a row, where
     the first column is the \emph{make rule} to be used in order to rerun the
     test case, while the second column is a brief description about what
     aspect the test points to. Tests reported in this table refer to simple
@@ -169,10 +170,13 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     A more difficult problem instance can be run using make rule \textbf{difficult}:
     here 13 teachings have been introduced, almost all of them have two teachers
     (one has $3$, two have $1$). Teachings are spread over $4$ degree courses
-    such that each course shares at least $2$ teachings with other courses.
+    such that each course shares at least $2$ teachings among other courses.
     Has been difficult to choose a combination of parameters to report result against,
-    so scheduling has been performed changing the number of available rooms,
-    in particular the following table shows recorded performances:
+    so scheduling has been repeated on different problem instances changing
+    the number of available rooms
+    \footnote{to reproduce this experience just comment/uncomment room predicates at the
+    top of source file \emph{clp-fd/datasets/difficult.prolog}},
+    the following table shows obtained performances:
 
     \begin{center}
         \begin{tabular}{p{6cm} | c}
@@ -192,7 +196,6 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
     \end{center}
 
     \begin{table}
-        \label{table:test-cases}
         \begin{tabular}{ c | p{6cm} }
             make rule & Description  \\
             \hline
@@ -248,16 +251,20 @@ schedule(monday,time(12,14),auditorium,algebra,verdi,[engineering,medicine])]
             \end{tabular}
 
         \caption{Test cases table with make rules and descriptions}
+        \label{table:test-cases}
+
     \end{table}
 
     \subsection{How to reproduce experiments}
     All the work to produce this document has been versioned in a
     \emph{Git} repository hosted at:
     \url{https://github.com/massimo-nocentini/ai-exercise}\\
-    In order to reproduce the above test cases just checkout the
+    In order to reproduce the above test cases \footnote{tests have been
+        executed under a SWI-Prolog 6.6.6 environment,
+        \url{http://www.swi-prolog.org/}}, checkout the
     repository, change directory into \emph{clp-fd} and use \textbf{make}
-    unix facility, specifying as a rule one in the first column of table
-    \ref{table:test-cases}, for example:
+    Unix facility, using rules reported in the first column of table
+    \autoref{table:test-cases}, for example:
     \begin{verbatim}
 $ git clone https://github.com/massimo-nocentini/ai-exercise.git
 ... git clone output ...
